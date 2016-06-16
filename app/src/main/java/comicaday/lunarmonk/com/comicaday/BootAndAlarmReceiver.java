@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.SystemClock;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 
@@ -47,7 +48,7 @@ public class BootAndAlarmReceiver extends BroadcastReceiver {
                         .setContentTitle("Comics")
                         .setContentText("Your daily Comics is here!");
 // Creates an explicit intent for an Activity in your app
-        Intent resultIntent = new Intent(context, ComicDisplayActivity.class);
+        Intent resultIntent = new Intent(context, DisplayActivity.class);
 
 // The stack builder object will contain an artificial back stack for the
 // started Activity.
@@ -55,7 +56,7 @@ public class BootAndAlarmReceiver extends BroadcastReceiver {
 // your application to the Home screen.
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
 // Adds the back stack for the Intent (but not the Intent itself)
-        stackBuilder.addParentStack(ComicDisplayActivity.class);
+        stackBuilder.addParentStack(MainActivity.class);
 // Adds the Intent that starts the Activity to the top of the stack
         stackBuilder.addNextIntent(resultIntent);
         PendingIntent resultPendingIntent =
@@ -77,9 +78,16 @@ public class BootAndAlarmReceiver extends BroadcastReceiver {
     {
         SharedPreferences sharedpreferences = context.getSharedPreferences(COMIC_PREFS, Context.MODE_PRIVATE);
         String str = sharedpreferences.getString(ID_COMIC_URL, null);
+        SharedPreferences.Editor editor = sharedpreferences.edit();
+        if(str == null)
+        {
+            editor.putString(Utility.ID_COMIC_URL, Integer.toString(Utility.SEED));
+            editor.commit();
+            return;
+        }
         int id = Integer.parseInt(str);
         id++;
-        SharedPreferences.Editor editor = sharedpreferences.edit();
+
 
         editor.putString(ID_COMIC_URL, Integer.toString(id));
         editor.commit();
@@ -90,15 +98,11 @@ public class BootAndAlarmReceiver extends BroadcastReceiver {
         alarmMgr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(context, BootAndAlarmReceiver.class);
         intent.setAction(BootAndAlarmReceiver.AlarmAction);
-        alarmIntent = PendingIntent.getBroadcast(context, ID_ALARM_UNIQUE, intent, PendingIntent.FLAG_NO_CREATE);
+        alarmIntent = PendingIntent.getBroadcast(context, ID_ALARM_UNIQUE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        alarmMgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                AlarmManager.INTERVAL_FIFTEEN_MINUTES/3,
-                AlarmManager.INTERVAL_FIFTEEN_MINUTES/3, alarmIntent);
-
-
-
-
+        alarmMgr.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                SystemClock.elapsedRealtime() + AlarmManager.INTERVAL_FIFTEEN_MINUTES,
+                AlarmManager.INTERVAL_FIFTEEN_MINUTES, alarmIntent);
 
     }
 }
